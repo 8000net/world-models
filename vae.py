@@ -1,3 +1,5 @@
+import glob
+
 import numpy as np
 
 from keras.layers import (
@@ -12,7 +14,7 @@ BATCH_SIZE = 1
 
 def sampling(args):
     z_mean, z_log_var = args
-    epsilon = K.random_normal(shape=(K.shape(z_mean)[0], latent_dim),
+    epsilon = K.random_normal(shape=(K.shape(z_mean)[0], 32),
         mean=0., stddev=1.0)
     return z_mean + K.exp(z_log_var / 2) * epsilon
 
@@ -44,7 +46,7 @@ h = decoder_h5(h)
 outputs = decoder_outputs(h)
 
 # Decoder
-_z = Input(shape=(latent_dim,))
+_z = Input(shape=(latent_dim,), name='decoder_input')
 _h = decoder_h1(_z)
 _h = decoder_h2(_h)
 _h = decoder_h3(_h)
@@ -64,12 +66,16 @@ vae.compile(optimizer='adam', loss=None)
 encoder = Model(inputs, z)
 decoder = Model(_z, _outputs)
 
-frames_path = 'frames.npy'
-frames = np.load(frames_path)
-n_episodes, n_frames, w, h, c = frames.shape
-frames = np.reshape(frames, (n_episodes * n_frames, w, h, c)) / 255.
 
-vae.fit(frames, shuffle=True, epochs=EPOCHS, batch_size=BATCH_SIZE)
+batches = glob.glob('./data/frames-*.npy')
+
+for batch in batches:
+    print('Loading %s...' % batch)
+    frames = np.load(batch)
+    n_episodes, n_frames, w, h, c = frames.shape
+    frames = np.reshape(frames, (n_episodes * n_frames, w, h, c)) / 255.
+
+    vae.fit(frames, shuffle=True, epochs=EPOCHS, batch_size=BATCH_SIZE)
 
 vae.save('vae.h5')
 encoder.save('encoder.h5')

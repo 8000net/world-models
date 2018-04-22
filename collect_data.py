@@ -1,3 +1,4 @@
+import os
 import random
 
 import numpy as np
@@ -9,7 +10,8 @@ NUM_EPISODES = 2000
 EPISODE_LEN = 300
 FRAME_SKIP = 5
 INIT_STEPS = 60
-CHECKPOINT = 100
+CHECKPOINT_INTERVAL = 100
+DATA_DIR = './data'
 
 def get_action(t, a):
     if t < INIT_STEPS:
@@ -46,8 +48,9 @@ env = gym.make('CarRacing-v0')
 frames = []
 actions = []
 
-i = 0
-while i < NUM_EPISODES:
+i = 1
+ckpt = 1
+while i <= NUM_EPISODES:
     print('Episode %d' % i)
     episode_frames = []
     episode_actions = []
@@ -69,11 +72,11 @@ while i < NUM_EPISODES:
     frames.append(episode_frames)
     actions.append(episode_actions)
 
-    if i % CHECKPOINT == 0:
-        np.save('frames.npy', frames)
-        np.save('actions.npy', actions)
+    if i % CHECKPOINT_INTERVAL == 0:
+        np.save(os.path.join(DATA_DIR, 'frames-%d.npy' % ckpt), frames)
+        np.save(os.path.join(DATA_DIR, 'actions-%d.npy' % ckpt), actions)
+        ckpt += 1
+        frames = []
+        actions = []
 
     i += 1
-
-np.save('frames.npy', frames)
-np.save('actions.npy', actions)
