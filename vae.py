@@ -10,7 +10,7 @@ import keras.backend as K
 input_dim = 64, 64, 3
 latent_dim = 32
 EPOCHS = 1
-BATCH_SIZE = 1
+BATCH_SIZE = 32
 
 def sampling(args):
     z_mean, z_log_var = args
@@ -54,7 +54,7 @@ _h = decoder_h4(_h)
 _h = decoder_h5(_h)
 _outputs = decoder_outputs(_h)
 
-l2_loss = K.sum(K.square(inputs - outputs)) / 2
+l2_loss = K.sum(K.square(inputs - outputs), axis=[1, 2, 3]) / 2
 kl_loss = -0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var),
                        axis=-1)
 
