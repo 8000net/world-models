@@ -75,51 +75,52 @@ def loss(y, output):
     return r_loss(y, output) + kl_loss(y, output)
 
 
-# Training model
-inputs = Input(shape=(None, input_dim))
-lstm = LSTM(lstm_units, return_sequences=True, return_state=True)
-lstm_out, _, _ = lstm(inputs)
-outputs = Dense(mdn_units, name='rnn_mdn_out')(lstm_out)
+def train_model():
+    # Training model
+    inputs = Input(shape=(None, input_dim))
+    lstm = LSTM(lstm_units, return_sequences=True, return_state=True)
+    lstm_out, _, _ = lstm(inputs)
+    outputs = Dense(mdn_units, name='rnn_mdn_out')(lstm_out)
 
-rnn = Model(inputs, outputs)
+    rnn = Model(inputs, outputs)
 
-# Prediction model
-# inputs_h - hidden state
-# inputs_c - last output from LSTM
-#
-# Agent should keep the last hidden state and output,
-# and feed into this model to get the next hidden state
+    # Prediction model
+    # inputs_h - hidden state
+    # inputs_c - last output from LSTM
+    #
+    # Agent should keep the last hidden state and output,
+    # and feed into this model to get the next hidden state
 
-inputs_h = Input(shape=(lstm_units,))
-inputs_c = Input(shape=(lstm_units,))
-_, state_h, state_c = lstm(inputs, initial_state=[inputs_h, inputs_c])
+    inputs_h = Input(shape=(lstm_units,))
+    inputs_c = Input(shape=(lstm_units,))
+    _, state_h, state_c = lstm(inputs, initial_state=[inputs_h, inputs_c])
 
-forward = Model([inputs, inputs_h, inputs_c], [state_h, state_c])
+    forward = Model([inputs, inputs_h, inputs_c], [state_h, state_c])
 
 
-rnn.compile('adam', loss)
+    rnn.compile('adam', loss)
 
-for i in range(1, 2):
-    print('Loading batch %d...' % i)
-    z = np.load('./data/z-%i.npy' % i)
-    actions = np.load('./data/actions-%i.npy' % i)
-    X = []
-    Y = []
-    for seq_z, seq_a in zip(z, actions):
-        seq_za = []
+    for i in range(1, 2):
+        print('Loading batch %d...' % i)
+        z = np.load('./data/z-%i.npy' % i)
+        actions = np.load('./data/actions-%i.npy' % i)
+        X = []
+        Y = []
+        for seq_z, seq_a in zip(z, actions):
+            seq_za = []
 
-        for frame_z, frame_a in zip(seq_z, seq_a):
-            seq_za.append(np.hstack([frame_z, frame_a]))
+            for frame_z, frame_a in zip(seq_z, seq_a):
+                seq_za.append(np.hstack([frame_z, frame_a]))
 
-        # Store x_i as z_i + a_i, and y_i as z_i+1
-        X.append(seq_za[:-1])
-        Y.append(seq_z[1:])
+            # Store x_i as z_i + a_i, and y_i as z_i+1
+            X.append(seq_za[:-1])
+            Y.append(seq_z[1:])
 
-    X = np.array(X)
-    Y = np.array(Y)
+        X = np.array(X)
+        Y = np.array(Y)
 
-    rnn.fit(X, Y, shuffle=True, epochs=EPOCHS, batch_size=BATCH_SIZE,
-            validation_split=0.2)
+        rnn.fit(X, Y, shuffle=True, epochs=EPOCHS, batch_size=BATCH_SIZE,
+                validation_split=0.2)
 
-rnn.save('mdn-rnn.h5')
-forward.save('mdn-rnn-forward.h5')
+    rnn.save('mdn-rnn.h5')
+    forward.save('mdn-rnn-forward.h5')

@@ -43,40 +43,41 @@ def get_action(t, a):
         return np.array([0, 0, random.random()])
 
 
-env = gym.make('CarRacing-v0')
+def collect_data():
+    env = gym.make('CarRacing-v0')
 
-frames = []
-actions = []
+    frames = []
+    actions = []
 
-i = 1
-ckpt = 1
-while i <= NUM_EPISODES:
-    print('Episode %d' % i)
-    episode_frames = []
-    episode_actions = []
-    done = False
-    obs = env.reset()
-    env.render()
-    t = 0
-    a = None
-    while t < EPISODE_LEN:
-        a = get_action(t, a)
-
-        episode_frames.append(imresize(obs, (64, 64)))
-        episode_actions.append(a)
-        obs, r, done, info = env.step(a)
+    i = 1
+    ckpt = 1
+    while i <= NUM_EPISODES:
+        print('Episode %d' % i)
+        episode_frames = []
+        episode_actions = []
+        done = False
+        obs = env.reset()
         env.render()
+        t = 0
+        a = None
+        while t < EPISODE_LEN:
+            a = get_action(t, a)
 
-        t += 1
+            episode_frames.append(imresize(obs, (64, 64)))
+            episode_actions.append(a)
+            obs, r, done, info = env.step(a)
+            env.render()
 
-    frames.append(episode_frames)
-    actions.append(episode_actions)
+            t += 1
 
-    if i % CHECKPOINT_INTERVAL == 0:
-        np.save(os.path.join(DATA_DIR, 'frames-%d.npy' % ckpt), frames)
-        np.save(os.path.join(DATA_DIR, 'actions-%d.npy' % ckpt), actions)
-        ckpt += 1
-        frames = []
-        actions = []
+        frames.append(episode_frames)
+        actions.append(episode_actions)
 
-    i += 1
+        if i % CHECKPOINT_INTERVAL == 0:
+            np.save(os.path.join(DATA_DIR, 'frames-%d.npy' % ckpt), frames)
+            np.save(os.path.join(DATA_DIR, 'actions-%d.npy' % ckpt), actions)
+            ckpt += 1
+            frames = []
+            actions = []
+
+        i += 1
