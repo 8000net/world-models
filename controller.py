@@ -3,9 +3,10 @@ import math
 import numpy as np
 
 class Controller:
-    def __init__(self, W, b):
-        self.W = W
-        self.b = b
+    def __init__(self, params, W_size=(3, 32), b_size=3):
+        W_end = W_size[0]*W_size[1]
+        self.W = np.reshape(params[:W_end], W_size)
+        self.b = params[W_end:]
 
     def get_action(self, x):
         a = np.dot(self.W, x) + self.b
