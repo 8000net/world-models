@@ -25,4 +25,5 @@ https://github.com/justinledford/gym/tree/car-remove-zoom
 
 
 ## Data / Models
-TODO: upload data and models
+Data: https://s2.smu.edu/~jledford/ml/world-models/data.tar.gz  
+Models: https://s2.smu.edu/~jledford/ml/world-models/models.tar.gz  
