@@ -6,8 +6,8 @@ import numpy as np
 from scipy.misc import imresize, imsave
 from keras.models import load_model
 
-from gi.repository import Gtk
-from threading import Thread
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 from rnn import loss, r_loss, kl_loss
 from collect_data import get_action
@@ -16,18 +16,6 @@ z_dim = 32
 a_dim = 3
 input_dim = z_dim + a_dim
 gaussian_mixtures = 5
-
-IMAGE_PATH = '/tmp/wm.jpg'
-class Window(Gtk.Window):
-    def __init__(self):
-        Gtk.Window.__init__(self)
-        self.image = Gtk.Image()
-        self.image.set_from_file(IMAGE_PATH)
-        self.add(self.image)
-
-    def refresh_image(self):
-        self.image.set_from_file(IMAGE_PATH)
-
 
 def get_mixture_coef(output):
     d = gaussian_mixtures * z_dim
@@ -61,45 +49,46 @@ def sample(pi, mu, sigma):
     # Sample kth gaussian
     return np.random.normal(mu, sigma)
 
-def save_decoded_z(z, decoder):
-    z = np.expand_dims(z, axis=0)
-    img = decoder.predict(z)[0]
-    img = np.reshape(img, (64, 64, 3))
-    imsave(IMAGE_PATH, img)
+fig = plt.figure()
 
+
+t = 0
+z = np.load('./data/z-1.npy')[0][0]
+a = np.load('./data/actions-1.npy')[0][0]
+obs = None
 rnn = load_model('./models/mdn-rnn.h5',
         custom_objects={'loss': loss, 'r_loss': r_loss, 'kl_loss': kl_loss})
 decoder = load_model('./models/decoder.h5')
+done = True
 
-z = np.load('./data/z-1.npy')[0][0]
-a = np.load('./data/actions-1.npy')[0][0]
+im = plt.imshow(np.zeros((64, 64, 3)), animated=True)
 
-done = False
-def stop(widget, data=None):
-    global done
-    done = True
-    Gtk.main_quit()
+def update_fig(*args):
+    global t, z, a, obs, rnn, decoder, done
 
-win = Window()
-win.connect("delete-event", stop)
-save_decoded_z(z, decoder)
-win.show_all()
+    # Decode and display
+    decoded = decoder.predict(np.array([z]))[0]
+    im.set_array(decoded)
 
-window_thread = Thread(target=Gtk.main)
-window_thread.start()
-
-t = 0
-while not done:
-    a = get_action(t, a)
+    # Sample dream frame for next iteration
     output = rnn.predict(np.array([[np.hstack([z, a])]]))[0]
     pi, mu, sigma = get_mixture_coef(output)
     pi = pi[0]
     mu = mu[0]
     sigma = sigma[0]
-
     z = sample(pi, mu, sigma)
-    save_decoded_z(z, decoder)
-    win.refresh_image()
+
+    time.sleep(1/10)
 
     t += 1
-    time.sleep(1/10)
+
+    # Get random action for next state
+    a = get_action(t, a)
+
+    return im,
+
+
+
+
+ani = animation.FuncAnimation(fig, update_fig, interval=50, blit=True)
+plt.show()
