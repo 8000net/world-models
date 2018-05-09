@@ -7,7 +7,7 @@ from scipy.misc import imresize
 from keras.models import load_model
 
 from controller import Controller
-from es import ES
+from es import CMA_ES
 from load_encoder import load_encoder
 
 POP_SIZE = 16 # Number of solutions in each generation
@@ -81,7 +81,7 @@ def start_work(worker_i, solution):
 
 
 def train():
-    solver = ES(pop_size=POP_SIZE, n_dim=3*32+3, stddev=1.0)
+    solver = CMA_ES(pop_size=POP_SIZE, n_dim=3*32+3, init_stddev=1.0)
     pool = multiprocessing.Pool(processes=NUM_WORKERS)
 
     gen = 0

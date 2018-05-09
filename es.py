@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+import cma
 import numpy as np
 
 class Solver(ABC):
@@ -59,6 +60,33 @@ class ES(Solver):
         self.best_solution = self.solutions[max_i]
         self.best_fitness = fitness_list[max_i]
         self.mean = self.best_solution
+
+    def result(self):
+        return self.best_solution, self.best_fitness
+
+
+class CMA_ES(Solver):
+    """
+    Wrapper around CMA-ES from pycma
+    """
+    def __init__(self, pop_size, n_dim, init_stddev):
+        self.pop_size = pop_size
+        self.n_dim = n_dim
+        self.init_stddev = init_stddev
+        self.cma_es = cma.CMAEvolutionStrategy([0]* n_dim, init_stddev,
+                                               {'popsize': pop_size})
+
+    def ask(self):
+        self.solutions = self.cma_es.ask()
+        return self.solutions
+
+    def tell(self, fitness_list):
+        # scale fitness list so ES maximizes
+        fitness_list = 1 / (np.array(fitness_list) + .1)
+        self.cma_es.tell(self.solutions, fitness_list)
+        result = self.cma_es.result
+        self.best_solution = result.xbest
+        self.best_fitness = 1/(result.fbest) - .1
 
     def result(self):
         return self.best_solution, self.best_fitness
