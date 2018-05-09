@@ -17,7 +17,7 @@ def process_obs(obs):
 encoder = load_model('./models/encoder.h5')
 decoder = load_model('./models/decoder.h5')
 rnn = load_model('./models/mdn-rnn-forward.h5')
-controller_params = np.load('./controller-params.npy')
+controller_params = np.load('./models/controller-params.npy')
 controller = Controller(controller_params)
 env = gym.make('CarRacing-v0')
 

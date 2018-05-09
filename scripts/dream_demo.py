@@ -1,5 +1,6 @@
 import time
 import random
+import sys
 
 import gym
 import numpy as np
@@ -9,6 +10,7 @@ from keras.models import load_model
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
+sys.path.append('..')
 from rnn import loss, r_loss, kl_loss
 from collect_data import get_action
 
@@ -53,12 +55,12 @@ fig = plt.figure()
 
 
 t = 0
-z = np.load('./data/z-1.npy')[0][0]
-a = np.load('./data/actions-1.npy')[0][0]
+z = np.load('../data/z-1.npy')[0][0]
+a = np.load('../data/actions-1.npy')[0][0]
 obs = None
-rnn = load_model('./models/mdn-rnn.h5',
+rnn = load_model('../models/mdn-rnn.h5',
         custom_objects={'loss': loss, 'r_loss': r_loss, 'kl_loss': kl_loss})
-decoder = load_model('./models/decoder.h5')
+decoder = load_model('../models/decoder.h5')
 done = True
 
 im = plt.imshow(np.zeros((64, 64, 3)), animated=True)
