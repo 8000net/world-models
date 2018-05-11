@@ -7,13 +7,14 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 from controller import Controller
+from load_encoder import load_encoder
 
 VIEW_DECODED = False
 
 def process_obs(obs):
     return np.expand_dims(imresize(obs, (64, 64)), axis=0) / 255.
 
-encoder = load_model('./models/encoder.h5')
+encoder = load_encoder()
 decoder = load_model('./models/decoder.h5')
 rnn = load_model('./models/mdn-rnn-forward.h5')
 controller_params = np.load('./models/controller-params.npy')
