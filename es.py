@@ -69,11 +69,13 @@ class CMA_ES(Solver):
     """
     Wrapper around CMA-ES from pycma
     """
-    def __init__(self, pop_size, n_dim, init_stddev):
+    def __init__(self, pop_size, n_dim, init_stddev, phenotype=None):
         self.pop_size = pop_size
         self.n_dim = n_dim
         self.init_stddev = init_stddev
-        self.cma_es = cma.CMAEvolutionStrategy([0]* n_dim, init_stddev,
+        if phenotype is None:
+            phenotype = [0] * n_dim
+        self.cma_es = cma.CMAEvolutionStrategy(phenotype, init_stddev,
                                                {'popsize': pop_size})
 
     def ask(self):
@@ -82,11 +84,11 @@ class CMA_ES(Solver):
 
     def tell(self, fitness_list):
         # scale fitness list so ES maximizes
-        fitness_list = 1 / (np.array(fitness_list) + .1)
+        fitness_list = -np.array(fitness_list)
         self.cma_es.tell(self.solutions, fitness_list)
         result = self.cma_es.result
         self.best_solution = result.xbest
-        self.best_fitness = 1/(result.fbest) - .1
+        self.best_fitness = -result.fbest
 
     def result(self):
         return self.best_solution, self.best_fitness
