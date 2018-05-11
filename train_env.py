@@ -10,9 +10,9 @@ from controller import Controller
 from es import CMA_ES
 from load_encoder import load_encoder
 
-POP_SIZE = 16 # Number of solutions in each generation
+POP_SIZE = 12 # Number of solutions in each generation
 STDDEV = 1.0
-FITNESS_GOAL = 100
+FITNESS_GOAL = 700
 FRAME_SKIP = 5
 NUM_WORKERS = POP_SIZE
 N_ROLLOUTS_PER_TRIAL = 4
@@ -48,6 +48,8 @@ def rollouts(agent, worker_i, n=N_ROLLOUTS_PER_TRIAL):
             if t % FRAME_SKIP == 0:
                 #a = agent.get_action(np.hstack([z, h]))
                 a = agent.get_action(z)
+                # turn off brake
+                a[2] = 0
                 #a = np.array([0, 1, 0])
 
             obs, reward, done, info = env.step(a)
@@ -70,7 +72,7 @@ def rollouts(agent, worker_i, n=N_ROLLOUTS_PER_TRIAL):
 
     env.close()
     avg_reward /= n
-    print('Avg reward (over %d rollouts): %d' % (n, avg_reward))
+    print('Worker %d: avg reward (over %d rollouts): %f' % (worker_i, n, avg_reward))
     return avg_reward
 
 
@@ -81,10 +83,14 @@ def start_work(worker_i, solution):
 
 
 def train():
-    solver = CMA_ES(pop_size=POP_SIZE, n_dim=3*32+3, init_stddev=1.0)
+    phenotype = np.load('controller-params.npy')
+    #phenotype = None
+    solver = CMA_ES(phenotype=phenotype, pop_size=POP_SIZE,
+                    n_dim=3*32+3, init_stddev=1.0)
     pool = multiprocessing.Pool(processes=NUM_WORKERS)
 
     gen = 0
+    fitness_history = []
     while True:
         print('Generation %d' % gen)
         solutions = solver.ask()
@@ -93,19 +99,25 @@ def train():
         worker_results = [pool.apply_async(start_work, (i, solutions[i]))
                           for i in range(POP_SIZE)]
         fitness_list = [res.get() for res in worker_results]
+        fitness_history.append(fitness_list)
 
         solver.tell(fitness_list)
         best_solution, best_fitness = solver.result()
 
-        print('Generation %d: chose best solution with fitness %f' % (
-            gen, best_fitness))
+        print('Generation %d: best fitness %f' % (gen, best_fitness))
 
         if best_fitness >= FITNESS_GOAL:
             np.save('controller-params.npy', best_solution)
+            np.save('fitness-history.npy', np.array(fitness_history))
             break
+
+        if gen > 1 and gen % 10 == 0:
+            np.save('controller-params.npy', best_solution)
+            np.save('fitness-history.npy', np.array(fitness_history))
 
         gen += 1
 
 
 if __name__ == '__main__':
+    print(NUM_WORKERS)
     train()
