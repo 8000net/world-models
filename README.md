@@ -27,3 +27,10 @@ https://github.com/justinledford/gym/tree/car-remove-zoom
 ## Data / Models
 Data: https://s2.smu.edu/~jledford/ml/world-models/data.tar.gz  
 Models: https://s2.smu.edu/~jledford/ml/world-models/models.tar.gz  
+
+
+## References
+https://worldmodels.github.io/  
+https://blog.keras.io/building-autoencoders-in-keras.html  
+http://blog.otoro.net/2015/11/24/mixture-density-networks-with-tensorflow/  
+https://medium.com/applied-data-science/how-to-build-your-own-world-model-using-python-and-keras-64fb388ba459  
